@@ -1,0 +1,398 @@
+Document = 
+	content:(Inline / Block)*
+    {
+    	return {type: "document", content: content}
+    }
+
+/*    
+  *  block 
+  */
+Block
+	= FrontCover
+    / BackCover
+    / Front
+    / Back
+    / Section
+    / Colophon
+    / Indent
+    / Figure
+    / Waka
+
+FrontCover
+	= "［表紙］\n" content:BlockContent "［表紙ここまで］"
+    {
+    	return {
+        	type: "frontCover",
+            typeJP: "表紙",
+            content: content
+            }    	
+    }
+
+BackCover
+	= "［裏表紙］\n" content:BlockContent "［裏表紙ここまで］"
+    {
+    	return {
+        	type: "backCover",
+            typeJP: "裏表紙",
+            content: content
+            }    	
+    }
+
+Front
+	= "［前書き］\n" content:BlockContent "［前書きここまで］"
+    {
+    	return {
+        	type: "front",
+            typeJP: "前書き",
+            content: content
+            }    	
+    } 
+
+Back
+	= "［後書き］\n" content:BlockContent "［後書きここまで］"
+    {
+    	return {
+        	type: "back",
+            typeJP: "後書き",
+            content: content
+            }    	
+    }
+    
+Section
+	= "［章段］\n" content:BlockContent "［章段ここまで］"
+    {
+    	return {
+        	type: "section",
+            typeJP: "裏表紙",
+            content: content
+            }    	
+    }    
+
+Colophon
+	= "［奥付］\n" content:BlockContent "［奥付ここまで］"
+    {
+    	return {
+        	type: "colophon",
+            typeJP: "奥付",
+            content: content
+            }    	
+    } 
+
+Figure
+	= "［絵図］\n" content:BlockContent "［絵図ここまで］"
+    {
+    	return {
+        	type: "figure",
+            typeJP: "絵図",
+            content: content
+            }    	
+    } 
+
+Waka
+	= "［和歌］\n" content:BlockContent "［和歌ここまで］"
+    {
+    	return {
+        	type: "waka",
+            typeJP: "和歌",
+            content: content
+            }    	
+    }
+
+Haiqu
+	= "［俳句］\n" content:BlockContent "［俳句ここまで］"
+    {
+    	return {
+        	type: "haiku",
+            typeJP: "俳句",
+            content: content
+            }    	
+    }
+
+Indent
+	= "［字下げ" S* indent:KanjiNum "］\n" content:BlockContent "［字下げここまで］"
+    {
+    	var list = ["一", "二", "三", "四", "五", "六", "七", "八", "九"]
+    	var size = list.indexOf(indent) + 1;
+    	return {
+        	type: "indent",
+            typeJP: "字下げ",
+            size: size,
+            content: content
+            }    	
+    }
+
+BlockContent
+	= (Inline/Block)*
+
+/*    
+  *  inline
+  */
+Inline
+	= Sugar 
+    / InlineElement 
+    / KanaSeq 
+    / KanjiSeq 
+    / LatinCharSeq 
+    / Symbol 
+    / Lb
+
+InlineElement
+	= Person 
+    / Place 
+    / Date 
+    / Furigana 
+    / Kaeri 
+    / Okuri 
+    / Warigaki 
+    / Box
+    / Comment
+    / Pb
+  
+// notations
+Furigana
+	= "《" ("振り仮名" / "ふりがな") "：" text:PhrasingContent* "｜" kana:PhrasingContent* "》"
+	{    	
+    	return {
+        	type: "furinaga",
+            typeJP: "振り仮名",
+            text: text,
+            kana: kana
+            }
+      }
+
+Kaeri
+	= "《返り点：" kaeri:(JpChar+)"》"
+	{    	
+    	return {
+        	type: "kaeri",
+            typeJP: "返り点",
+           	value: kaeri.join("")
+            }
+      }
+
+Okuri
+	= "《送り仮名：" okuri:(JpChar+) "》"
+	{    	
+    	return {
+        	type: "okuri",
+            typeJP: "送り仮名",
+           	value: okuri.join("")
+            }
+      }
+
+Warigaki
+	= "《割書：" right:InlineContent* "｜" left:InlineContent* "》"
+	{    	
+    	return {
+        	type: "warigaki",
+            typeJP: "割書",
+            right: right,
+            left: left
+            }
+      }
+
+Box
+	= "《文字囲：" content:InlineContent* "》"
+	{    	
+    	return {
+        	type: "box",
+            typeJP: "文字囲",
+            content: content
+            }
+      }
+
+Comment
+	= "《注記：" content:Text* "》"
+	{    	
+    	return {
+        	type: "comment",
+            typeJP: "注記",
+            content: content
+            }
+      }
+
+
+// place names
+Person
+	= "《人名：" content:InlineContent* "》"
+	{    	
+    	return {
+        	type: "person",
+            typeJP: "人名",
+            content: content
+            }
+      }
+      
+Place
+	= "《場所：" content:InlineContent* "》"
+	{    	
+    	return {
+        	type: "placeName",
+            typeJP: "地名",
+            content: content
+            }
+      }
+
+Date
+	= "《日時：" content:InlineContent* "》"
+	{    	
+    	return {
+        	type: "date",
+            typeJP: "日時",
+            content: content
+            }
+      }
+
+Pb 
+	= "《改頁》"
+    {return {type: "Pb", typeJP: "改頁"}}
+
+// attrs
+Attrs
+	= id:Id? classes:(Class*) 
+
+Id 
+	= "＃" name:Name {return name}
+
+Class 
+	= "＄" name:Name {return name}
+
+// Syntax sugars
+Sugar
+	= SFurigana2 
+    / SFurigana1
+    / SKaeri 
+    / SOkuri
+    / SComment
+    / SQuestion
+    / BugHoles
+    / Illegible
+
+SFurigana1
+	= "｜" text:PhrasingContent "（" kana:PhrasingContent "）"	
+	{
+    	return {
+        	type: "furigana", 
+            typeJP: "ふりがな",
+            text: text, 
+            kana: kana
+         }
+     }
+     
+SFurigana2
+	= text:KanjiSeq "（" kana:PhrasingContent "）"
+	{
+    	return {
+        	type: "furigana",  
+            typeJP: "ふりがな",
+            text: text, 
+            kana: kana
+         }
+     }
+
+SKaeri 
+	= "｛" kaeri:(JpChar)+ "｝"
+	{    	
+    	return {
+        	type: "kaeri",
+            typeJP: "返り点",
+           	value: kaeri.join("")
+            }
+      }    
+
+SOkuri 
+	= "〔" okuri:(JpChar)+ "〕"
+	{    	
+    	return {
+        	type: "okuri",
+            typeJP: "送り仮名",
+           	value: okuri.join("")
+            }
+      }  
+
+SComment
+	= "＊" text:Text "＊"
+	{
+    	return {
+        	type: "comment",  
+            typeJP: "注記",
+            value: text 
+         }
+     }
+     
+ SQuestion
+ 	= "？" content:InlineContent* "？"
+	{
+    	return {
+        	type: "question",  
+            typeJP: "自信なし",
+            content: content
+         }
+     }
+
+BugHoles
+ 	= chars:("■"+)
+	{
+    	return {
+        	type: "bugHoles",  
+            typeJP: "虫損",
+            size: chars.length
+         }
+     }
+
+Illegible
+ 	= chars:("□"+)
+	{
+    	return {
+        	type: "illegible",  
+            typeJP: "未読",
+            size: chars.length
+         }
+     }
+
+// Content
+InlineContent
+	= content:(Sugar / InlineElement / KanaSeq / KanjiSeq / LatinCharSeq / Symbol / Lb)
+
+PhrasingContent
+	= content:(KanaSeq / KanjiSeq / LatinCharSeq / InlineElement)+
+	 {return content.join("")}
+
+// base 
+Name
+	= name:(KanaSeq / KanjiSeq / LatinCharSeq / Symbol)+
+    {return name.join("")}
+
+Text 
+	= text:(KanaSeq / KanjiSeq / LatinCharSeq / Symbol)+
+    {return text.join("")}
+
+LatinCharSeq 
+	= str:(LatinChar+)
+    {return str.join("")}
+    
+KanjiSeq
+	= str:(Kanji+)
+    {return str.join("")}
+
+KanaSeq 
+	= str:(Kana+)
+    {return str.join("")}
+
+JpChar = Kana / Kanji
+
+LatinChar = [a-zA-Zα-ρσ-ωΑ-ΡΣ-ΩА-яЁё]
+
+Symbol = [\u3000-\u3009\u300C-\u3040]
+
+Kanji = [\u4E00-\u9FEA\u3400-\u4DFF]
+
+KanjiNum = [〇一二三四五六七八九]
+
+Kana = [ぁ-んァ-ヶ゛-ゞ・-ヾ○〳〵]
+
+Lb 
+	= "\n"
+    {return {type: "lb", typeJP: "改行"}}
+	
+S = [ 　]
